@@ -128,11 +128,11 @@ const prisma = new PrismaClient()
 GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET
 
-## En el archivo .env indicar el valor de la variable NEXTAUTH_SECRET="changethisonprod"
+### En el archivo .env indicar el valor de la variable NEXTAUTH_SECRET="changethisonprod"
 
-## Dentro del archivo `src/pages/api/auth/[...nextauth].ts` en authOptions reemplazar la palabra "discord" por "github"
+### Dentro del archivo `src/pages/api/auth/[...nextauth].ts` en authOptions reemplazar la palabra "discord" por "github"
 
-## reemplazar el DiscordProvider por GithubProvider:
+### reemplazar el DiscordProvider por GithubProvider:
 ~~~
 GithubProvider({
   clientId:env.GITHUB_CLIENT_ID,
