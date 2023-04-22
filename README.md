@@ -139,3 +139,14 @@ GithubProvider({
   clientSecret:env.GITHUB_CLIENT_SECRET
 })
 ~~~
+### Ejecutar la aplicación:
+~~~
+npm run dev
+~~~
+### Para ejecutar una visualización de la DB mas amigable
+~~~
+npx prisma studio
+~~~
+
+> NOTAS: Basado en el video tutorial de T3 stack realizado por ***manumrtf***
+> todos los derechoa al autororiginal.
