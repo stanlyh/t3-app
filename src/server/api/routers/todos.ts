@@ -3,7 +3,6 @@ import { prisma } from "../../db";
 
 import {
     createTRPCRouter,
-    publicProcedure,
     protectedProcedure,
   } from "../trpc";
 

@@ -13,10 +13,10 @@ const TodoForm:NextPage = () => {
             description,
             name
         },{
-            onError(error, variables, context){
+            onError(error, _variables, _context){
                 console.log(error)
             },
-            onSuccess(data, variables, context) {
+            onSuccess(data, _variables, _context) {
                 alert(`Todo ${data.name} created`)
             }
         })

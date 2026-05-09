@@ -6,7 +6,7 @@ const config = {
   overrides: [
     {
       extends: [
-        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "plugin:@typescript-eslint/recommended-type-checked",
       ],
       files: ["*.ts", "*.tsx"],
       parserOptions: {
