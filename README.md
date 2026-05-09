@@ -1,80 +1,160 @@
-# Create T3 App
+# T3 App — Gestor de Todos
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Aplicación full-stack construida con el **T3 Stack**: Next.js, tRPC, Prisma, NextAuth y Tailwind CSS.
 
-## What's next? How do I make an app with this?
+## Stack tecnológico
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+| Capa | Tecnología | Versión |
+|---|---|---|
+| Framework | Next.js (Pages Router) | 15.x |
+| API type-safe | tRPC | 11.x |
+| ORM | Prisma | 6.x |
+| Autenticación | NextAuth.js | 4.x |
+| Estilos | Tailwind CSS | 4.x |
+| Validación | Zod | 3.x |
+| Cache/Estado | React Query | 5.x |
+| Base de datos | MySQL (PlanetScale) | — |
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+---
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Arquitectura
 
-## Learn More
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        NAVEGADOR                            │
+│                                                             │
+│   /               /todos/create      /todos/show            │
+│   (index.tsx)     (create.tsx)       (show.tsx)             │
+│        │               │                  │                 │
+│        └───────────────┴──────────────────┘                 │
+│                        │                                    │
+│              React Query + tRPC Client                      │
+│              (src/utils/api.ts)                             │
+└─────────────────────────────┬───────────────────────────────┘
+                              │ HTTP /api/trpc/[trpc]
+┌─────────────────────────────▼───────────────────────────────┐
+│                       SERVIDOR (Next.js)                    │
+│                                                             │
+│   /api/auth/[...nextauth]      /api/trpc/[trpc]             │
+│   (NextAuth handler)           (tRPC handler)               │
+│          │                           │                      │
+│          │                    tRPC Router (root.ts)         │
+│          │                    ┌──────┴──────┐               │
+│          │               example        todosRouter         │
+│          │               Router          Router             │
+│          │                           (todos.ts)             │
+│          │                                │                 │
+│          └──────────────┬─────────────────┘                 │
+│                         │                                   │
+│                   Prisma Client                             │
+│                   (src/server/db.ts)                        │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│                  MySQL — PlanetScale                        │
+│                                                             │
+│   User  ──< Account                                         │
+│   User  ──< Session                                         │
+│   User  ──< Todo                                            │
+└─────────────────────────────────────────────────────────────┘
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+---
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+## Páginas y cómo interactúan
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+### `/` — Página principal
+- Muestra el nombre del usuario autenticado
+- Botón **Sign in / Sign out** conectado a NextAuth
+- Llama a `api.example.hello` para verificar la conexión tRPC
+- Si hay sesión activa, también consulta `api.example.getSecretMessage`
 
-## How do I deploy this?
+### `/todos/create` — Crear un todo
+- Formulario con campos **Name** y **Description**
+- Requiere sesión activa (la mutación está protegida en el servidor)
+- Al enviar llama a `api.todosRouter.createTodo.useMutation()`
+- El servidor asocia el todo al `userId` de la sesión actual
+- Confirma la creación con un `alert`
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
-# t3-app
+### `/todos/show` — Ver todos
+- Consulta `api.todosRouter.getTodos.useQuery()`
+- El servidor filtra y devuelve **solo los todos del usuario autenticado**
+- Muestra los resultados en una tabla con columnas: ID, Title, Description
+- Mientras carga muestra un mensaje de estado
 
-### Instalar T3
-~~~
-folder> npm create t3-app@latest
-~~~
+---
 
-### Need to install the following packages:
-~~~
-  create-t3-app@7.11.0
-~~~
-Ok to proceed? (y) y
-~~~
-   ___ ___ ___   __ _____ ___   _____ ____    __   ___ ___
-  / __| _ \ __| /  \_   _| __| |_   _|__ /   /  \ | _ \ _ \
- | (__|   / _| / /\ \| | | _|    | |  |_ \  / /\ \|  _/  _/
-  \___|_|_\___|_/‾‾\_\_| |___|   |_| |___/ /_/‾‾\_\_| |_|
-~~~
+## Flujo de datos (ejemplo: crear un todo)
 
-#### ? What will your project be called? **t3-app**
+```
+create.tsx
+   │
+   ├─ useMutation() → tRPC Client
+   │                       │
+   │               POST /api/trpc/todosRouter.createTodo
+   │                       │
+   │              tRPC Server (trpc.ts)
+   │                       │
+   │              protectedProcedure ──► verifica sesión (NextAuth)
+   │                       │
+   │              prisma.todo.create({ userId: session.user.id, ... })
+   │                       │
+   │                  PlanetScale MySQL
+   │                       │
+   └─ onSuccess → alert("Todo creado")
+```
 
-#### ? Will you be using TypeScript or JavaScript? **TypeScript**
+---
 
-Good choice! Using TypeScript!
+## Modelos de base de datos
 
-#### ? Which packages would you like to enable? ***nextAuth, prisma, tailwind, trpc***
+```prisma
+model Todo {
+    id          String  @id @default(cuid())
+    name        String
+    description String
+    userId      String
+    author      User    @relation(fields: [userId], references: [id])
+}
 
-#### ? Initialize a new git repository? **No**
+model User {
+    id       String  @id @default(cuid())
+    name     String?
+    email    String? @unique
+    Todo     Todo[]
+    // + campos de NextAuth (accounts, sessions)
+}
+```
 
-Sounds good! You can come back and run git init later.
+---
 
-#### ? Would you like us to run 'npm install'? **Yes**
+## Estructura de archivos clave
 
-Alright. We'll install the dependencies for you!
+```
+src/
+├── pages/
+│   ├── index.tsx                    ← Página principal
+│   ├── _app.tsx                     ← Provider global (tRPC + Session)
+│   ├── todos/
+│   │   ├── create.tsx               ← Formulario crear todo
+│   │   └── show.tsx                 ← Listado de todos
+│   └── api/
+│       ├── auth/[...nextauth].ts    ← Endpoints de NextAuth
+│       └── trpc/[trpc].ts           ← Endpoint de tRPC
+├── server/
+│   ├── auth.ts                      ← Configuración NextAuth
+│   ├── db.ts                        ← Singleton Prisma Client
+│   └── api/
+│       ├── trpc.ts                  ← Contexto y middleware tRPC
+│       ├── root.ts                  ← Router principal
+│       └── routers/
+│           ├── todos.ts             ← Procedimientos de todos
+│           └── example.ts           ← Procedimientos de ejemplo
+└── utils/
+    └── api.ts                       ← Cliente tRPC (frontend)
+```
 
-#### ? What import alias would you like configured? ~/
-~~~
-npm run dev
-~~~
-
-| Left-Aligned  | Center Aligned  | Right Aligned |<!-- --> |
-|:------------- |:---------------:| -------------:|---------|
-| Row 1         | **Bold**        | Cell 3        |Cell 10  |
-| Row 2         | *Italic*        | Cell 6        |Cell 11  |
-| Row 3         | ~~Strike~~      | Cell 9        |Cell 12  |
-| Row 3         | [Link](dot.com) | 👉 &#124;      |Cell 13 |
-$${\color{lightgreen}Light \space Green}$$
-$${\color{blue}Blue}$$
-<span style="color:red">cardenales</span>
+---
 
 ## En este ejemplo se utiliza una base de datos MYSQL desde PlanetScale (stanlydb)
 ### En el .env reemplzar por la URL para conectar con el ORM prisma
